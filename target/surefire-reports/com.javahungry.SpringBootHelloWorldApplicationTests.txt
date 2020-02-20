@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.javahungry.SpringBootHelloWorldApplicationTests
--------------------------------------------------------------------------------
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 8.905 s - in com.javahungry.SpringBootHelloWorldApplicationTests

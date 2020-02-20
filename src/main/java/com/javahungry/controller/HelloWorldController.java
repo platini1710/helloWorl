@@ -1,13 +1,14 @@
 package com.javahungry.controller;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Arrays;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,14 +79,38 @@ public class HelloWorldController {
 		return response.getBody();
 
 	}
-
-	@RequestMapping(method = RequestMethod.GET, value = "/uploadFile/{path}", produces = "application/json")
-	public @ResponseBody String listarFiles(@PathVariable("path") String path) {
+	@RequestMapping(method = RequestMethod.POST, value = "/user", produces = "application/json")
+	public @ResponseBody String getAutoriza() {
 		HttpHeaders headers = new HttpHeaders();
+		headers.add("Authorization", "application/x-www-form-urlencoded");
 		headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
 		HttpEntity<String> entity = new HttpEntity<String>(headers);
 
-		return restTemplate.exchange(urlBase + "/uploadFile/" + path, HttpMethod.GET, entity, String.class).getBody();
+		return restTemplate.exchange(urlBase + "/user?user=" +"user" + "&password=" + "pwd" , HttpMethod.GET, entity, String.class).getBody();
+	}
+	@RequestMapping(method = RequestMethod.GET, value = "/uploadFile/{path}", produces = "application/json")
+	public @ResponseBody String listarFiles(@PathVariable("path") String path) throws ParseException {
+		HttpHeaders headers = new HttpHeaders();
+		HttpEntity<String> entity = new HttpEntity<String>(headers);
+		MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+		body.add("user", "user");
+		body.add("password", "pwd");
+		String url=urlBase + "/user";
+		logger.info("url:::" +url);
+		HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+		String token= restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class).getBody();
+		 JSONParser jsonParser = new JSONParser();
+	     
+	JSONObject jsonObject = (JSONObject) jsonParser.parse(token);
+	   token = (String) jsonObject.get("token");
+		 headers = new HttpHeaders();
+		headers.add(HttpHeaders.AUTHORIZATION,  token);
+
+	   entity = new HttpEntity<String>(headers);
+		logger.info("token:::" +token);
+		String url2=urlBase + "/uploadFile/" + path;
+		logger.info("url2:::" +url2);
+		return restTemplate.exchange( url2,HttpMethod.GET, entity, String.class).getBody();
 	}
 
 	@RequestMapping(method = RequestMethod.DELETE, value = "/deleteFile/{path}", produces = "application/json")
@@ -109,6 +134,7 @@ public class HelloWorldController {
 		headers.setContentDispositionFormData("attachment",  "attachment; filename=\"" + file + "\""); 
         headers.setAccept(Arrays.asList(MediaType.APPLICATION_OCTET_STREAM));
 		headers.add("Content-Disposition","attachment;filename="+ file );  
+		
 		HttpEntity<String> entity = new HttpEntity<String>(headers);
         String msg="ok";
         byte[] downoladFile=null;
